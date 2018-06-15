@@ -22,9 +22,9 @@ for i=1:nel
     
     fid = fopen(outname, 'w+');
     for j=1:length(t)
-        fprintf(fid,'%s,%s,CHL_UGL=%4.3f (%d),BB=%4.3f (%d)\n', datestr(t(j), 'yyyy-mm-dd HH:MM:SS'), strrep((fields{i}),'_','-'), ...
+        fprintf(fid,'%s,%s,CHL_UGL=%4.3f (%d),BB=%6.5f (%d)\n', datestr(t(j), 'yyyy-mm-dd HH:MM:SS'), strrep((fields{i}),'_','-'), ...
             cleandat_level1.(fields{i}).fl_chl_a(j), cleandat_level1.(fields{i}).fl_qc(j), ...
-            cleandat_level1.(fields{i}).fl_chl_a(j), cleandat_level1.(fields{i}).fl_qc(j));
+            cleandat_level1.(fields{i}).bb_bbp(j), cleandat_level1.(fields{i}).bb_qc(j));
     end
     fclose(fid);
     
