@@ -41,7 +41,7 @@
       else
       {
         cldata[5] <- as.numeric(cldata[5])
-        ePAR <- as.numeric(cldata[5])*exp(-0.04*as.numeric(cldata[7]))
+        ePAR <- 0.80*as.numeric(cldata[5])*exp(-0.04*as.numeric(cldata[7]))
       }
       return(ePAR)
     }
