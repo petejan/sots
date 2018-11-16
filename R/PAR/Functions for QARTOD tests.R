@@ -21,10 +21,10 @@
     applyclimatologytest <- function(data)
     {
       #check if PAR value is above 3
-      if (as.numeric(data[3]) > 3)
+      if (as.numeric(data['par']) > 3)
       {
         #check if PAR value fails test
-        if (as.numeric(data[3]) > as.numeric(data[11]))
+        if (as.numeric(data['par']) > as.numeric(data[11]))
         {
           #check if the data point is taken below the surface
           if (as.numeric(data[7] > 1))

@@ -16,6 +16,7 @@ library(LakeMetabolizer)
 
 #Importing data from netcdf file
   allPAR <- read.nc(open.nc("IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-DiscreteGeometries_END-20160413_C-20180604.nc"))
+  instanceSplit <- strsplit(allPAR$station_name, ":")
   
 #Isolating the useful information from the netcdf
   PARandsensor <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
@@ -40,6 +41,11 @@ library(LakeMetabolizer)
   
 #all the good and bad data
   allthePARdata <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
-    allthePARdata$sensor <- allthePARdata$sensor + 1
-    allthePARdata$deployment <- unlist(lapply(allthePARdata$sensor,mooringfromsensor))
+  allthePARdata$sensor <- allthePARdata$sensor + 1
+  allthePARdata$deployment <- unlist(lapply(allthePARdata$sensor,mooringfromsensor))
     
+# output a csv file
+  allthePARdata$dates <- format(as.POSIXct(allthePARdata$time, tz="UTC", origin = "1950-01-01"), '%Y-%m-%d %H:%M:%S')
+  write.csv(allthePARdata, file = "ParDataQC.csv", row.names=FALSE)
+
+  

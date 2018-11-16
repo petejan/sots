@@ -34,14 +34,14 @@
     #calculate PAR at the depth of the data point based on clear water kd values
     climatologyPARfromKd <- function(cldata)
     {
-      if (cldata[7] <= 0)
+      if (cldata['depth'] <= 0)
       {
-        ePAR <- cldata[5]
+        ePAR <- cldata['solrad']
       }
       else
       {
-        cldata[5] <- as.numeric(cldata[5])
-        ePAR <- as.numeric(cldata[5])*exp(-0.04*as.numeric(cldata[7]))
+        cldata['solrad'] <- as.numeric(cldata['solrad'])
+        ePAR <- as.numeric(cldata['solrad'])*exp(-0.04*as.numeric(cldata['depth']))
       }
       return(ePAR)
     }
@@ -112,7 +112,7 @@
     
    
     rocPARandsensor$floortimes <- floor(rocPARandsensor$time)
-    rocPARandsensor <- merge(rocPARandsensor,rocformerge, by = c("floortimes","sensor"),all = TRUE)
+    rocPARandsensor <- merge(rocPARandsensor,rocformerge, by = c("floortimes","sensor"), all = TRUE)
     rocPARandsensor <- rocPARandsensor[order(rocPARandsensor$time),]
     
     
@@ -147,7 +147,7 @@
     
     #Running the flat line test
     flflags <- by(dayflPARandsensor,dayflPARandsensor$sensor,function(x) {
-      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right',tolerance = 0.1))
+      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right', tolerance = 0.1))
     })
     
     #adding flags back into day data
