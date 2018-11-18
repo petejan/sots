@@ -30,8 +30,10 @@ stn_surface_data = ismember(stationIndex, stn_surface);
 figure(2)
 plot(time(cSR>1 & stn_surface_data), sw(cSR>1 & stn_surface_data)./par(cSR>1 & stn_surface_data), '.');
 
-stn_2011 = regexp(station_name_cell, '.*2015:.*');
-Index = find(not(cellfun('isempty',stn_2011)));
+%stn_select = regexp(station_name_cell, '.*2009:.*');
+%Index = find(not(cellfun('isempty',stn_select)));
+
+Index = nom_depth <= 0;
 
 qc_level = 10;
 stn = min(stationIndex):max(stationIndex);
@@ -64,7 +66,8 @@ for i = stn(Index)
 end
 
 figure(3); clf; hold on; grid on;
-sw2par = 4.57 ; % (McCree 1972). was 2.114
+sw2par = 4.57;
+%sw2par = 2.114 ; % (McCree 1972). was 2.114
 
 [uniqueDaysSW,idxToUniqueSW,idxFromUniqueBackToAllSW] = unique(round(datenum(time_ag-10/24 )));
 dailyMeanSWAG = accumarray(idxFromUniqueBackToAllSW(~isnan(sw_ag)), sw_ag(~isnan(sw_ag)),[],@mean);
@@ -80,8 +83,8 @@ for i = 1:n-1
     %plot(uniqueTS{i}, dailyMeanCSR{i} * 2.114, '-.', 'DisplayName', ['CSR ' station_name(:,station{i}+1)']);
     %plot(uniqueTS{i}, dailyMeanSW{i} * 2.114, '-', 'DisplayName', ['SW ' station_name(:,station{i}+1)']);
 end
-set(gca, 'YScale', 'log')
-legend('show', 'Location','southoutside');
+%set(gca, 'YScale', 'log')
+%legend('show', 'Location','southoutside');
 ylabel('radiation (umol/s/m^2)');
-ylim([1 5000]);
+ylim([10 5000]);
 xlim([minTs maxTs]);
