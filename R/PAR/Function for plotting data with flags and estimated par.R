@@ -1,9 +1,9 @@
 #plotting flags with estimated PAR values
-testplottingflags <- function(x,data)
+testplottingflags <- function(sensor, data)
 {
   data$dates <- as.Date(data$time, origin = "1950-01-01")
-  pardata <- subset(data,data$sensor == x)
-  ePARdata <- subset(clPARandsensor,clPARandsensor$sensor == x)
+  pardata <- subset(data,data$sensor == sensor)
+  ePARdata <- subset(clPARandsensor,clPARandsensor$sensor == sensor)
   
   meanePARdata <- dailymeansePAR(ePARdata)
   meanepardates <- data.frame(dates = seq.Date(min(meanePARdata$dates),max(meanePARdata$dates),by = "day"))
@@ -35,7 +35,7 @@ testplottingflags <- function(x,data)
                                                                       shape = c(22,22),
                                                                       fill = "red","dark green")))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -70,7 +70,7 @@ testplottingflags <- function(x,data)
                                                                       shape = c(22,22),
                                                                       fill = "orange","dark green")))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -107,7 +107,7 @@ testplottingflags <- function(x,data)
                                                                       shape = c(22,22,22),
                                                                       fill = c("orange","red","dark green"))))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -154,7 +154,7 @@ testplottingflags <- function(x,data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -191,7 +191,7 @@ testplottingflags <- function(x,data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -231,7 +231,7 @@ testplottingflags <- function(x,data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")

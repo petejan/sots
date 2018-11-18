@@ -1,7 +1,7 @@
 % add a incomming radiation to PAR file
 
-%infile = 'data/IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-DiscreteGeometries_END-20160413_C-20180423.nc';
-infile = 'data/IMOS_ABOS-SOTS_F_20100318_SOFS_FV01_SOFS-1-2010-SW-DiscreteGeometries_END-20171101_C-20180414.nc';
+%infile = '../../data/IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-DiscreteGeometries_END-20160413_C-20180423.nc';
+infile = '../../data/IMOS_ABOS-SOTS_F_20100318_SOFS_FV01_SOFS-1-2010-SW-DiscreteGeometries_END-20171101_C-20180414.nc';
 
 file = [infile(1:size(infile,2)-11) datestr(datetime(), 'yyyymmdd') '.nc'];
 
