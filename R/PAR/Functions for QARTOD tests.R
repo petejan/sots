@@ -18,23 +18,32 @@
 
 
 #Climatology test
+    #function for estimating ePAR based on clear water kd values
+    climatologyPARfromKd <- function(cldata)
+    {
+      if (cldata["depth"] <= 0)
+      {
+        ePAR <- cldata["solrad"]
+      }
+      else
+      {
+        cldata["solrad"] <- as.numeric(cldata["solrad"])
+        ePAR <- as.numeric(cldata["solrad"])*exp(-0.04*as.numeric(cldata["depth"]))
+      }
+      return(ePAR)
+    }
+    
+    
+    
     applyclimatologytest <- function(data)
     {
       #check if PAR value is above 3
-      if (as.numeric(data['par']) > 3)
+      if (as.numeric(data[3]) > 3)
       {
         #check if PAR value fails test
-        if (as.numeric(data['par']) > as.numeric(data[11]))
+        if (as.numeric(data[3]) > (as.numeric(data[12])*3))
         {
-          #check if the data point is taken below the surface
-          if (as.numeric(data[7] > 1))
-          {
-            return(4)
-          }
-          else
-          {
-            return(3)
-          }
+          return(3)
         }
         else
         {

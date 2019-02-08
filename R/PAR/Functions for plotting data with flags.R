@@ -1,8 +1,8 @@
 
-plottingflags <- function(sensor,data)
+plottingflags <- function(x,data)
 {
   data$dates <- as.Date(data$time, origin = "1950-01-01")
-  pardata <- subset(data,data$sensor == sensor)
+  pardata <- subset(data,data$sensor == x)
   print(sum(pardata$flags == 1))
 
   
@@ -30,7 +30,7 @@ plottingflags <- function(sensor,data)
                                                                                 shape = c(22),
                                                                                 fill = "red")))
                 
-                plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+                plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
                 
                 plot <- plot + xlab("Date")
                 plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))
@@ -64,7 +64,7 @@ plottingflags <- function(sensor,data)
                                                                                 shape = c(22),
                                                                                 fill = "orange")))
                 
-                plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+                plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
                 
                 plot <- plot + xlab("Date")
                 plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))
@@ -101,7 +101,7 @@ plottingflags <- function(sensor,data)
                                                                                 shape = c(22,22),
                                                                                 fill = c("orange","red"))))
                 
-                plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+                plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
                 
                 plot <- plot + xlab("Date")
                 plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))
@@ -146,7 +146,7 @@ plottingflags <- function(sensor,data)
         plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                         shape = c(22,22))))
         
-        plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+        plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
         
         plot <- plot + xlab("Date")
         plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))
@@ -182,7 +182,7 @@ plottingflags <- function(sensor,data)
         plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                         shape = c(22,22))))
         
-        plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+        plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
         
         plot <- plot + xlab("Date")
         plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))
@@ -221,7 +221,7 @@ plottingflags <- function(sensor,data)
         plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                         shape = c(22,22,22))))
         
-        plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+        plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
         
         plot <- plot + xlab("Date")
         plot <- plot + ylab(PAR~(mu*mol~m^-2~s^-1))

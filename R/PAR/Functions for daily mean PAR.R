@@ -28,8 +28,14 @@ dailymeansePAR <- function(data)
   means <- data.frame(day = NA,meanepar = NA,deployment = NA)
   for (x in seq(min(data$time),max(data$time)))
   {
-    
-    eparmean <- mean(subset(data$ePAR,data$time == x))
+    if (sum(data$time == x) < 24)
+    {
+      eparmean <- NA
+    }
+    else
+    {
+      eparmean <- mean(subset(data$ePAR,data$time == x))
+    }
 
     
     means <- rbind(means,data.frame(day = x, 

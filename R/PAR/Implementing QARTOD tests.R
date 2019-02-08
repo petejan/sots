@@ -29,22 +29,7 @@
     
     #Converting solar radiation data from Wm^-2 to micro mol photons m^-2 s^-1
     clPARandsensor$solrad <- sw.to.par.base(clPARandsensor$solrad)
-    
-    
-    #calculate PAR at the depth of the data point based on clear water kd values
-    climatologyPARfromKd <- function(cldata)
-    {
-      if (cldata['depth'] <= 0)
-      {
-        ePAR <- cldata['solrad']
-      }
-      else
-      {
-        cldata['solrad'] <- as.numeric(cldata['solrad'])
-        ePAR <- as.numeric(cldata['solrad'])*exp(-0.04*as.numeric(cldata['depth']))
-      }
-      return(ePAR)
-    }
+
     
     #adding estimated PAR to data 
     clPARandsensor$ePAR <- apply(clPARandsensor,1,climatologyPARfromKd)
@@ -112,7 +97,7 @@
     
    
     rocPARandsensor$floortimes <- floor(rocPARandsensor$time)
-    rocPARandsensor <- merge(rocPARandsensor,rocformerge, by = c("floortimes","sensor"), all = TRUE)
+    rocPARandsensor <- merge(rocPARandsensor,rocformerge, by = c("floortimes","sensor"),all = TRUE)
     rocPARandsensor <- rocPARandsensor[order(rocPARandsensor$time),]
     
     
@@ -129,8 +114,8 @@
     }
     
     #removing columns that won't be needed any more
-    rocPARandsensor <- rocPARandsensor[,-13]
-    colnames(rocPARandsensor)[11] <- "flags"
+    rocPARandsensor <- rocPARandsensor[,-14]
+    colnames(rocPARandsensor)[12] <- "flags"
     
     #ensuring data is ordered chronologically 
     rocPARandsensor <- rocPARandsensor[order(rocPARandsensor$time),]
@@ -143,11 +128,13 @@
     
 
     #Isolating day time data
+    #this has old flags in it, let's try removing them?
     dayflPARandsensor <- daydataPAR(flPARandsensor)
+    dayflPARandsensor$flags <- 1
     
     #Running the flat line test
     flflags <- by(dayflPARandsensor,dayflPARandsensor$sensor,function(x) {
-      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right', tolerance = 0.1))
+      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right',tolerance = 0.1))
     })
     
     #adding flags back into day data
@@ -162,7 +149,11 @@
                                                            "deployment",
                                                            "depth",
                                                            "lat",
-                                                           "lon")
+                                                           "lon",
+                                                           "sw",
+                                                           "solrad",
+                                                           "ePAR",
+                                                           "floortimes")
                   , all.x = TRUE)
     
     #Replacing unevaluated flags with a value of 2
@@ -180,7 +171,7 @@
                                uneval = sum(flPARandsensor$flags.y == 2))
   
     #Removing unnecessary columns from data
-    flPARandsensor <- flPARandsensor[,-c(9,11,12,13,14,15,16)]
+    flPARandsensor <- flPARandsensor[,-c(13,14)]
     
     #ensuring data is ordered chronologically
     flPARandsensor <- flPARandsensor[order(flPARandsensor$time),]
@@ -329,6 +320,10 @@
     neighbourPARandsensor <- neighbourPARandsensor[order(neighbourPARandsensor$time),]
     
     
+#reflag all SOFS 1 surface data as 3
+    neighbourPARandsensor$flags[neighbourPARandsensor$sensor==5] <- 3
+    
+    
     
       
 
@@ -338,6 +333,20 @@
       badqcflags <- data.frame(time = badqcPARandsensor$time,flags = badqcPARandsensor$par_qc)
       goodqcflags <- data.frame(time = neighbourPARandsensor$time,flags = neighbourPARandsensor$flags)
       finalflags <- rbind(goodqcflags,badqcflags)
+      finalflags2 <- finalflags[order(finalflags$time),]
       
+      
+#Pete wants format time, mooring, PAR, value, flag
+      
+      mooringvec <-  unlist(lapply(allthePARdata$sensor,mooringfromsensor))
+      PARvec <- rep("PAR",6135719)
+      PARvalues <- allthePARdata$par
+
+      finaldataforpete <- cbind(finalflags2$time,mooringvec,PARvec,PARvalues,finalflags2$flags)      
+      colnames(finaldataforpete) <- c("TIME","MOORING","OBSCODE","VALUE","QC FLAG")
+      
+      
+      #csv
+      write.csv(finaldataforpete,file = "qcPARdata.csv", row.names = FALSE)
       
       

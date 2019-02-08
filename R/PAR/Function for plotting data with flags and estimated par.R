@@ -1,15 +1,20 @@
 #plotting flags with estimated PAR values
-testplottingflags <- function(sensor, data)
+testplottingflags <- function(x,data)
 {
   data$dates <- as.Date(data$time, origin = "1950-01-01")
-  pardata <- subset(data,data$sensor == sensor)
-  ePARdata <- subset(clPARandsensor,clPARandsensor$sensor == sensor)
+  pardata <- subset(data,data$sensor == x)
+  ePARdata <- subset(clPARandsensor,clPARandsensor$sensor == x)
   
   meanePARdata <- dailymeansePAR(ePARdata)
   meanepardates <- data.frame(dates = seq.Date(min(meanePARdata$dates),max(meanePARdata$dates),by = "day"))
   meanePARdata <- merge(meanepardates,meanePARdata,by = "dates", all.x = TRUE)
-  meanePARdata <- meanePARdata[-length(meanePARdata[,1]),]
-
+  
+  length <- length(meanePARdata[,1])
+  print(length)
+  length2 <- length - 20
+  print(length2)
+  
+  meanePARdata <- meanePARdata[-(length2:length),]
   
   suspardata <- subset(pardata,pardata$flags == 3)
   
@@ -26,7 +31,7 @@ testplottingflags <- function(sensor, data)
       print("nosus")
       plot <- ggplot()
       plot <- plot + geom_point(data = failpardata,aes(dates,par,colour = "Fail"),size = 0.25)
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
       
       plot <- plot + scale_colour_manual(breaks = c("Fail","Mean Estimated PAR"),
                                          name = "",
@@ -35,7 +40,7 @@ testplottingflags <- function(sensor, data)
                                                                       shape = c(22,22),
                                                                       fill = "red","dark green")))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -61,7 +66,7 @@ testplottingflags <- function(sensor, data)
       print("nofail")
       plot <- ggplot()
       plot <- plot + geom_point(data = suspardata,aes(dates,par,colour = "Suspect"),size = 0.25)
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
       
       plot <- plot + scale_colour_manual(breaks = c("Suspect","Mean Estimated PAR"),
                                          name = "",
@@ -70,7 +75,7 @@ testplottingflags <- function(sensor, data)
                                                                       shape = c(22,22),
                                                                       fill = "orange","dark green")))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -98,7 +103,7 @@ testplottingflags <- function(sensor, data)
       plot <- ggplot()
       plot <- plot + geom_point(data = suspardata,aes(dates,par,colour = "Suspect"),size = 0.25)
       plot <- plot + geom_point(data = failpardata,aes(dates,par,colour = "Fail"),size = 0.25)
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
       
       plot <- plot + scale_colour_manual(breaks = c( "Suspect", "Fail","Mean Estimated PAR"),
                                          name = "",
@@ -107,7 +112,7 @@ testplottingflags <- function(sensor, data)
                                                                       shape = c(22,22,22),
                                                                       fill = c("orange","red","dark green"))))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -144,7 +149,7 @@ testplottingflags <- function(sensor, data)
       plot <- ggplot()
       plot <- plot + geom_point(data = failpardata,aes(dates,par,colour = "Fail"),size = 0.25)
       plot <- plot + geom_line(data = meanpardates,aes(dates,meanpar, colour = "Mean PAR"))
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
       
       
       
@@ -154,7 +159,7 @@ testplottingflags <- function(sensor, data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -181,7 +186,7 @@ testplottingflags <- function(sensor, data)
       plot <- ggplot()
       plot <- plot + geom_point(data = suspardata,aes(dates,par,colour = "Suspect"),size = 0.25)
       plot <- plot + geom_line(data = meanpardates,aes(dates,meanpar, colour = "Mean PAR"))
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed")
       
       
       
@@ -191,7 +196,7 @@ testplottingflags <- function(sensor, data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
@@ -219,7 +224,7 @@ testplottingflags <- function(sensor, data)
       plot <- plot + geom_point(data = suspardata,aes(dates,par,colour = "Suspect"),size = 0.25)
       plot <- plot + geom_point(data = failpardata,aes(dates,par,colour = "Fail"),size = 0.25)
       plot <- plot + geom_line(data = meanpardates,aes(dates,meanpar, colour = "Mean PAR"))
-      plot <- plot + geom_line(data = meanePARdata,aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed",size = 1)
+      plot <- plot + geom_line(data = meanePARdata[2:nrow(meanePARdata),],aes(dates,meanepar,colour = 'Mean Estimated PAR'),linetype = "dashed",size = 1)
       
       
       
@@ -231,7 +236,7 @@ testplottingflags <- function(sensor, data)
       plot <- plot + guides(colour = guide_legend(override.aes = list(size = 5,
                                                                       shape = c(22,22,22,22))))
       
-      plot <- plot + ggtitle(paste(sensors$name[sensor]," (",sensors$deployment[sensor]," - ",sensors$depth[sensor],")", sep = ""))
+      plot <- plot + ggtitle(paste(sensors$name[x]," (",sensors$deployment[x]," - ",sensors$depth[x],")", sep = ""))
       plot <- plot + scale_x_date(labels = date_format("%b"))
       
       plot <- plot + xlab("Date")
