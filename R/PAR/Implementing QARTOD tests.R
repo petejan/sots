@@ -3,14 +3,33 @@
     #using data from import
     grPARandsensor <- PARandsensor
     
+    #Converting solar radiation data from Wm^-2 to micro mol photons m^-2 s^-1
+    grPARandsensor$solrad <- sw.to.par.base(grPARandsensor$solrad)
+    
     #Applying gross range test
     grPARandsensor$flags <- sapply(grPARandsensor$par,
                                    grossrangetest,
-                                   sensormin = 0,
+                                   sensormin = -1.7,
                                    sensormax = 10000,
-                                   opmin = 0,
+                                   opmin = -1.7,
                                    opmax = 4500)
-  
+    
+    
+    grPARandsensor$dates <- as.Date(grPARandsensor$time,origin = "1950-01-01")
+    
+    kd490high <- 0.0166 + 0.07242*1^0.68955
+    kd490low <- 0.0166 + 0.07242*0.5^0.68955
+    
+    kdPARhigh <- 0.0864 + 0.884*kd490high - 0.00137*(kd490high)^-1
+    kdPARlow <- 0.0864 + 0.884*kd490low - 0.00137*(kd490low)^-1
+      
+    
+    grPARandsensor$ePARhigherchl <- apply(grPARandsensor,1,climatologyPARfromKd,kd = kdPARhigh)
+    grPARandsensor$ePARhigherchl <- as.numeric(grPARandsensor$ePARhigherchl)
+    grPARandsensor$ePARlowerchl <- apply(grPARandsensor,1,climatologyPARfromKd,kd = kdPARlow)
+    grPARandsensor$ePARlowerchl <- as.numeric(grPARandsensor$ePARlowerchl)
+    
+    
     #Getting flag counts
     grflagcounts <- data.frame(good =sum(grPARandsensor$flags == 1),
                                fail = sum(grPARandsensor$flags == 4),
@@ -27,12 +46,11 @@
     clPARandsensor <- grPARandsensor[order(grPARandsensor$time),]
     
     
-    #Converting solar radiation data from Wm^-2 to micro mol photons m^-2 s^-1
-    clPARandsensor$solrad <- sw.to.par.base(clPARandsensor$solrad)
+
 
     
     #adding estimated PAR to data 
-    clPARandsensor$ePAR <- apply(clPARandsensor,1,climatologyPARfromKd)
+    clPARandsensor$ePAR <- apply(clPARandsensor,1,climatologyPARfromKd,kd = 0.04)
     clPARandsensor$ePAR <- as.numeric(clPARandsensor$ePAR)
     
     #Applying test to generate flags
@@ -41,90 +59,34 @@
     #Add flags to data
     clPARandsensor$flags <- addflags(clPARandsensor$flags,clflags)
     
+    
+    
+        #clPARandsensor$floortimes <- floor(clPARandsensor$time)
+        
+        #clbaddays <- subset(clPARandsensor,clPARandsensor$flags==3)
+        
+        #clPARandsensor$flags[clPARandsensor$floortimes %in% clbaddays$floortimes] <- 3
+    
     #Getting flag counts
     clflagcounts <- data.frame(good = sum(clflags ==1), 
                                fail = sum(clflags == 4),
                                suspect = sum(clflags == 3),
                                uneval = sum(clflags == 2))
     
+    #removing flags file
+    rm(clflags)
+    
     #ensuring data is ordered chronologically
     clPARandsensor <- clPARandsensor[order(clPARandsensor$time),]
 
     
     
-#Rate of change test  
-    
-    #Using output from climatology test
-    rocPARandsensor <- clPARandsensor
-    
-    #Isolating night time data
-    dayrocdata <- daydataPAR(rocPARandsensor)
-    nightrocPARandsensor <- subset(rocPARandsensor,!(rocPARandsensor$time %in% dayrocdata$time))
-    
-    #Get mean PAR for each night
-    nightlymeanrocPAR <- nightrocPARandsensor
-    nightlymeanrocPAR$time <- floor(nightlymeanrocPAR$time)
-    nightlymeanrocPAR <- ddply(nightlymeanrocPAR,.variables = 'sensor',dailymeans)
-    
-    
-    #add the appropriate SDs
-    rocsd <- by(nightlymeanrocPAR,nightlymeanrocPAR$sensor,function(x) {
-      c(NA,rollapply(x$meanpar,FUN = sd, width = 7))
-    })
-    
-    nightlymeanrocPAR$sd <- NA
-    for (x in as.numeric(rownames(rocsd)))
-    {
-      nightlymeanrocPAR$sd[nightlymeanrocPAR$sensor == x] <- append(unlist(rocsd[x])[-1],c(NA,NA,NA,NA,NA,NA))
-    }
-    
-    #Run the rate of change test
-    rocflags <- roctest(nightlymeanrocPAR,3)
-    
-    #Replace unevaluated flags with value of 2
-    rocflags[is.na(rocflags)] <- 2
-    
-    #Getting flag counts
-    rocflagcounts <- data.frame(good = sum(rocflags == 1),
-                                fail = sum(rocflags == 4),
-                                suspect = sum(rocflags == 3),
-                                uneval = sum(rocflags == 2))
-    
-    #Adding flags back into data
-    rocformerge <- data.frame(floortimes = nightlymeanrocPAR$day,
-                              flags = rocflags,
-                              sensor = nightlymeanrocPAR$sensor)
-    
-   
-    rocPARandsensor$floortimes <- floor(rocPARandsensor$time)
-    rocPARandsensor <- merge(rocPARandsensor,rocformerge, by = c("floortimes","sensor"),all = TRUE)
-    rocPARandsensor <- rocPARandsensor[order(rocPARandsensor$time),]
-    
-    
-    rocflagslong <- rocPARandsensor$flags.y
-    rocflagslong[is.na(rocflagslong)] <- 2
-    
-    #ensuring only adding flags to night data
-    for (x in seq(1, length(rocPARandsensor[,1])))
-    {
-      if (rocPARandsensor$time[x] %in% nightrocPARandsensor$time[x])
-      {
-        rocPARandsensor$flags.x[x] <- addflags(rocPARandsensor$flags.x[x],rocPARandsensor$flags.y[x])
-      }
-    }
-    
-    #removing columns that won't be needed any more
-    rocPARandsensor <- rocPARandsensor[,-14]
-    colnames(rocPARandsensor)[12] <- "flags"
-    
-    #ensuring data is ordered chronologically 
-    rocPARandsensor <- rocPARandsensor[order(rocPARandsensor$time),]
-    
+
     
 #Flat line test
     
     #Using output of rate of change test
-    flPARandsensor <- rocPARandsensor
+    flPARandsensor <- clPARandsensor
     
 
     #Isolating day time data
@@ -134,7 +96,7 @@
     
     #Running the flat line test
     flflags <- by(dayflPARandsensor,dayflPARandsensor$sensor,function(x) {
-      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right',tolerance = 0.1))
+      c(NA,rollapply(x$par,FUN = flatlinetest, width = 5, fill = NA, align = 'right',tolerance = 0))
     })
     
     #adding flags back into day data
@@ -153,7 +115,9 @@
                                                            "sw",
                                                            "solrad",
                                                            "ePAR",
-                                                           "floortimes")
+                                                           "dates",
+                                                           "ePARhigherchl",
+                                                           "ePARlowerchl")
                   , all.x = TRUE)
     
     #Replacing unevaluated flags with a value of 2
@@ -163,25 +127,29 @@
     
     #Adding daytime flags to entire flag data
     flPARandsensor$flags <- addflags(flPARandsensor$flags.x,flPARandsensor$flags.y)
-
+    
+    #removing flag file
+    rm(flflags)
+    
     #Getting flag counts
     flflagcounts <- data.frame(good = sum(flPARandsensor$flags.y == 1),
                                fail = sum(flPARandsensor$flags.y == 4),
                                suspect = sum(flPARandsensor$flags.y == 3),
                                uneval = sum(flPARandsensor$flags.y == 2))
-  
-    #Removing unnecessary columns from data
-    flPARandsensor <- flPARandsensor[,-c(13,14)]
+
     
     #ensuring data is ordered chronologically
     flPARandsensor <- flPARandsensor[order(flPARandsensor$time),]
-      
+    
+    flPARandsensor$flags.x <- NULL
+    flPARandsensor$flags.y <- NULL
+    
 #Neighbour test
     
     #Isolating daily means to make this test more simple
     dailymeanPAR <- flPARandsensor
     dailymeanPAR$time <- floor(dailymeanPAR$time)
-    dailymeanPAR <- ddply(dailymeanPAR,.variables = 'sensor',dailymeans)
+    dailymeanPAR <- ddply(dailymeanPAR,.variables = 'sensor',testdailymeans)
     dailymeanPAR <- daysoftheyear(dailymeanPAR)
     dailymeanPAR$depth <- unlist(lapply(dailymeanPAR$sensor,depthfromsensor))
     dailymeanPAR$sensorname <- sapply(dailymeanPAR$sensor,sensorname)
@@ -209,7 +177,7 @@
     neighbourtestPULSE$flags <- neighbourflagschronPULSE
     
     #Need to change flags that are due to two sensors being at the same depth
-    neighbourtestPULSE$flags[neighbourtestPULSE$depth == 50 & neighbourtestPULSE$deployment == "Pulse 10"] <- 1
+    neighbourtestPULSE$flags[neighbourtestPULSE$depth == 50 & neighbourtestPULSE$deployment == "Pulse-10-2013"] <- 1
     
     neighbourtestPULSE$floortimes <- neighbourtestPULSE$day
     neighbourtestPULSE$addingmore3 <- NA
@@ -309,6 +277,14 @@
     #Adding flags from mean data back into full dataset
     neighbourPARandsensor <- merge(neighbourPARandsensor,neighbourformerge, by = c('floortimes',"sensor"), all.x = TRUE)
     
+    incompletedays <- subset(dailymeanPAR,is.na(dailymeanPAR$meanpar))
+    
+    for (x in seq(1,length(incompletedays[,1])))
+    {
+      neighbourPARandsensor$flags.y[neighbourPARandsensor$floortimes == incompletedays$day[x] & neighbourPARandsensor$sensor == incompletedays$sensor[x]] <- 2
+    }
+    
+    
     neighbourPARandsensor$flags.y[is.na(neighbourPARandsensor$flags.y)] <- 2
     neighbourflagslong <- neighbourPARandsensor$flags.y
     
@@ -316,12 +292,18 @@
     neighbourPARandsensor$flags <- addflags(neighbourPARandsensor$flags.x,neighbourPARandsensor$flags.y)
     
     #adding dates for plotting
-    neighbourPARandsensor$dates <- as.Date(neighbourPARandsensor$time,origin = "1950-01-01")
+    #neighbourPARandsensor$dates <- as.Date(neighbourPARandsensor$time,origin = "1950-01-01")
     neighbourPARandsensor <- neighbourPARandsensor[order(neighbourPARandsensor$time),]
     
     
+    #removing unnecessary files
+    rm(neighbourtest,neighbourflagsPULSE,neighbourflagsSOFS,neighbourtestlogicPULSE,neighbourtestlogicSOFS,neighbourtestPULSE,neighbourtestSOFS)
+    
 #reflag all SOFS 1 surface data as 3
     neighbourPARandsensor$flags[neighbourPARandsensor$sensor==5] <- 3
+    neighbourPARandsensor$flags[neighbourPARandsensor$sensor==2] <- 3
+    neighbourPARandsensor$flags[neighbourPARandsensor$sensor==22] <- 3
+    neighbourPARandsensor <- neighbourPARandsensor[,-c(8,9,10,11)]
     
     
     

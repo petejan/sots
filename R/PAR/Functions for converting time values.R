@@ -2,7 +2,7 @@ daysoftheyear <- function(data)
 {
   #times as dates
   dates <- timeconv(as.numeric(unlist(data["day"])))
-  # print(dates)
+
   
   #times as dates in string format
   timestring <- timeconvstring(as.numeric(unlist(data["day"])))
@@ -12,10 +12,7 @@ daysoftheyear <- function(data)
   timeinfo <- data.frame(time = data["day"], 
                          dates,
                          timetojan = unlist(lapply(dates[,1],timefromjanfunction))) 
-  #print(timeinfo)
-  
-  
-  #timeinfo <- cbind(timeinfo,timetojan)
+
   
   #convert the time into days since july 1st within the year of that data set
   timeinfo[,1] <- timeinfo[,1] - timeinfo[,8]

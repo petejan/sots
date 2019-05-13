@@ -19,7 +19,7 @@
 
 #Climatology test
     #function for estimating ePAR based on clear water kd values
-    climatologyPARfromKd <- function(cldata)
+    climatologyPARfromKd <- function(cldata,kd)
     {
       if (cldata["depth"] <= 0)
       {
@@ -28,7 +28,7 @@
       else
       {
         cldata["solrad"] <- as.numeric(cldata["solrad"])
-        ePAR <- as.numeric(cldata["solrad"])*exp(-0.04*as.numeric(cldata["depth"]))
+        ePAR <- as.numeric(cldata["solrad"])*exp(-kd*as.numeric(cldata["depth"]))
       }
       return(ePAR)
     }
@@ -38,10 +38,10 @@
     applyclimatologytest <- function(data)
     {
       #check if PAR value is above 3
-      if (as.numeric(data[3]) > 3)
+      if (as.numeric(data["par"]) > 3)
       {
         #check if PAR value fails test
-        if (as.numeric(data[3]) > (as.numeric(data[12])*3))
+        if (as.numeric(data["par"]) > (as.numeric(data["ePAR"])*3))
         {
           return(3)
         }
@@ -58,32 +58,6 @@
     
 
     
-#rate of change test
-    roctest <- function(data, numberofsd)
-    {
-      #flags
-      flags <- rep(NA,length(data$meanpar))
-      for (x in seq(1,length(data$meanpar) - 1))
-      {
-        #check if data has an associated sd value
-        if (!is.na(data$sd[x]))
-        {
-          #check if difference between two data points is greater than 3 sd
-          if (abs(data$meanpar[x] - data$meanpar[x+1]) > numberofsd*data$sd[x])
-          {
-            flags[x] <- 3
-          }
-          else
-          {
-            flags[x] <- 1
-          }
-        }
-      }
-      return(flags)
-    }
-    
-    
-
 #flat line test
     flatlinetest <- function(data,tolerance)
     {
@@ -184,6 +158,7 @@
                     {
                       return(3)
                     }
+                    
                     else
                     {
                       return(1)

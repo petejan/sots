@@ -28,11 +28,6 @@
   clflagsanddep <- data.frame(flags = clflags, dep = clPARandsensor$deployment)
   clflagcounts <- mooringflagcounts(clflagsanddep)
 
-
-  #RATE OF CHANGE
-  rocflagsanddep <- data.frame(flags = rocflagslong, dep = rocPARandsensor$deployment)
-  rocflagcounts <- mooringflagcounts(rocflagsanddep)
-
   #FLAT LINE
   flflagsanddep <- data.frame(flags = flflagslong, dep = flPARandsensor$deployment)
   flflagcounts <- mooringflagcounts(flflagsanddep)
@@ -60,10 +55,9 @@
   
   clflagtable <- creatingflagtable(clflagcounts)
   
-  rocflagtable <- creatingflagtable(rocflagcounts)
   
   flflagtable <- creatingflagtable(flflagcounts)
   
   neighbourflagtable <- creatingflagtable(neighbourflagcounts)
   
-  flagtotaltable <- grflagtable + clflagtable + rocflagtable + flflagtable + neighbourflagtable
+  flagtotaltable <- grflagtable + clflagtable + flflagtable + neighbourflagtable

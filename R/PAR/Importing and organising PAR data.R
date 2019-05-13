@@ -13,9 +13,11 @@ library(oce)
 library(gtable)
 library(grid)
 library(LakeMetabolizer)
+library(ggpubr)
 
 #Importing data from netcdf file
   allPAR <- read.nc(open.nc("IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-SR-SW-DiscreteGeometries_END-20160413_C-20181128.nc"))
+  instanceSplit <- strsplit(allPAR$station_name, ":")
   
 #Isolating the useful information from the netcdf
   PARandsensor <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR,sw = allPAR$SW)
@@ -39,7 +41,7 @@ library(LakeMetabolizer)
 
   
 #all the good and bad data
-  allthePARdata <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
-    allthePARdata$sensor <- allthePARdata$sensor + 1
-    allthePARdata$deployment <- unlist(lapply(allthePARdata$sensor,mooringfromsensor))
+  #allthePARdata <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
+    #allthePARdata$sensor <- allthePARdata$sensor + 1
+    #allthePARdata$deployment <- unlist(lapply(allthePARdata$sensor,mooringfromsensor))
     
