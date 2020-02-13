@@ -15,7 +15,7 @@ library(grid)
 library(LakeMetabolizer)
 
 #Importing data from netcdf file
-  allPAR <- read.nc(open.nc("IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-DiscreteGeometries_END-20160413_C-20180604.nc"))
+  allPAR <- read.nc(open.nc("IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-SWR-cSR-DiscreteGeometries_END-20160413_C-20200213.nc"))
   instanceSplit <- strsplit(allPAR$station_name, ":")
   
 #Import the SWR data
@@ -46,9 +46,3 @@ library(LakeMetabolizer)
   allthePARdata <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
   allthePARdata$sensor <- allthePARdata$sensor + 1
   allthePARdata$deployment <- unlist(lapply(allthePARdata$sensor,mooringfromsensor))
-    
-# output a csv file
-  allthePARdata$dates <- format(as.POSIXct(allthePARdata$time*24*3600, tz="UTC", origin = "1950-01-01"), '%Y-%m-%d %H:%M:%S')
-  write.csv(allthePARdata, file = "ParDataQC.csv", row.names=FALSE)
-
-  
