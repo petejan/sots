@@ -1,3 +1,5 @@
+# needs work to remove hard coding values and sensor sampling periods
+
 testdailymeans <- function(data)
 {
   data$time <- floor(data$time)
