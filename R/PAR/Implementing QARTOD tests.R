@@ -1,148 +1,92 @@
 
-PARandsensor$dates <- as.Date(PARandsensor$time,origin = "1950-01-01")
-
 #Gross range test
 
-  #using data from import
-  grPARandsensor <- PARandsensor
-  
   #Applying gross range test
-  grPARandsensor$flags <- sapply(grPARandsensor$par,
-                                 grossrangetest,
-                                 sensormin = 0,
-                                 sensormax = 10000,
-                                 opmin = 0,
-                                 opmax = 4500)
-  
-  grPARandsensor$gr_flags <- grPARandsensor$flags # save flags for later debug
+  test_params <- "gross_range: sensor_min=-1.7, sensor_max=10000, output_min=-1.7, output_max=4500"
+  PARandsensor$flags_gr <- sapply(PARandsensor$par,
+                                  grossrangetest,
+                                  sensormin = -1.7,
+                                  sensormax = 10000,
+                                  opmin = -1.7,
+                                  opmax = 4500)
   
   #Getting flag counts
-  grflagcounts <- data.frame(good =sum(grPARandsensor$flags == 1),
-                             fail = sum(grPARandsensor$flags == 4),
-                             suspect = sum(grPARandsensor$flags == 3),
-                             uneval = sum(grPARandsensor$flags == 2))
+  grflagcounts <- data.frame(good =sum(PARandsensor$flags_gr == 1),
+                             fail = sum(PARandsensor$flags_gr == 4),
+                             suspect = sum(PARandsensor$flags_gr == 3),
+                             uneval = sum(PARandsensor$flags_gr == 2))
   
 #Climatology test
-
-  kd490high <- 0.0166 + 0.07242*1^0.68955
-  kd490low <- 0.0166 + 0.07242*0.5^0.68955
+  test_params <- paste(test_params, "climatology: offset=3, mult=3, kd=0.04", sep="\n");
   
-  kdPARhigh <- 0.0864 + 0.884*kd490high - 0.00137*(kd490high)^-1
-  kdPARlow <- 0.0864 + 0.884*kd490low - 0.00137*(kd490low)^-1
-  
-  grPARandsensor$ePARhigherchl <- apply(grPARandsensor, 1, climatologyPARfromKd, kd=kdPARhigh)
-  grPARandsensor$ePARhigherchl <- as.numeric(grPARandsensor$ePARhigherchl)
-  grPARandsensor$ePARlowerchl <- apply(grPARandsensor, 1, climatologyPARfromKd, kd=kdPARlow)
-  grPARandsensor$ePARlowerchl <- as.numeric(grPARandsensor$ePARlowerchl)
-  
-  #Using output of gross range test
-  clPARandsensor <- grPARandsensor[order(grPARandsensor$time),]
-  
-  #adding estimated PAR to data 
-  clPARandsensor$ePAR <- apply(clPARandsensor, 1, climatologyPARfromKd, kd=0.04)
-  clPARandsensor$ePAR <- as.numeric(clPARandsensor$ePAR)
+  # adding estimated PAR to data 
+  PARandsensor$ePAR <- apply(PARandsensor, 1, climatologyPARfromKd, kd=0.04)
   
   #Applying test to generate flags
-  clflags <- apply(clPARandsensor, 1, applyclimatologytest)
-  
-  #Add flags to data
-  clPARandsensor$flags <- addflags(clPARandsensor$flags, clflags)
-  
-  #clPARandsensor$floortimes <- floor(clPARandsensor$time)
-  
-  #clbaddays <- subset(clPARandsensor,clPARandsensor$flags==3)
-  
-  #clPARandsensor$flags[clPARandsensor$floortimes %in% clbaddays$floortimes] <- 3
-  
-  clPARandsensor$cl_flags <- clflags  # save for later debug
+  PARandsensor$flags_cl <- apply(PARandsensor, 1, applyclimatologytest2, limit=3, mult=3)
+
+  # combine flags
+  PARandsensor$flags <- addflags(PARandsensor$flags_gr, PARandsensor$flags_cl)
   
   #Getting flag counts
-  clflagcounts <- data.frame(good = sum(clflags ==1), 
-                             fail = sum(clflags == 4),
-                             suspect = sum(clflags == 3),
-                             uneval = sum(clflags == 2))
+  clflagcounts <- data.frame(good = sum(PARandsensor$flags_cl ==1), 
+                             fail = sum(PARandsensor$flags_cl == 4),
+                             suspect = sum(PARandsensor$flags_cl == 3),
+                             uneval = sum(PARandsensor$flags_cl == 2))
   
   #ensuring data is ordered chronologically
-  clPARandsensor <- clPARandsensor[order(clPARandsensor$time),]
+  #clPARandsensor <- clPARandsensor[order(clPARandsensor$time),]
 
   
     
 #Flat line test
+    test_params <- paste(test_params, "flat line: day_data_only, window=5, tolerance=0", sep="\n");
   
-    #Using output of flat line test
-    flPARandsensor <- clPARandsensor
-    
     #Isolating day time data
-    dayflPARandsensor <- daydataPAR(flPARandsensor)
-    
+    day_data <- PARandsensor$solrad > 3
+
     #Running the flat line test
-    flflags <- by(dayflPARandsensor,dayflPARandsensor$sensor, function(x) 
+    flflags <- by(PARandsensor$par[day_data], PARandsensor$sensor[day_data], function(x) 
     {
-      c(NA,rollapply(x$par,FUN = flatlinetest, width=5, fill=NA, align='right', tolerance=0))
+      c(NA,rollapply(x, FUN = flatlinetest, width=5, fill=NA, align='right', tolerance=0))
     })
     
-    #adding flags back into day data
-    dayflPARandsensor <- separatesensorflags(dayflPARandsensor, flflags)
-    
-    
-    #Merging day time data back into full dataset
-    flPARandsensor <- merge(flPARandsensor,dayflPARandsensor, by = c("time",
-                                                                     "sensor",
-                                                                     "par",
-                                                                     "par_qc",
-                                                                     "deployment",
-                                                                     "depth",
-                                                                     "lat",
-                                                                     "lon")
-                            , all.x = TRUE)
-    
-    #Replacing unevaluated flags with a value of 2
-    flPARandsensor$flags.y[is.na(flPARandsensor$flags.y)] <- 2
-    
-    flflagslong <- flPARandsensor$flags.y
-    
-    #Adding daytime flags to entire flag data
-    flPARandsensor$flags <- addflags(flPARandsensor$flags.x, flPARandsensor$flags.y)
-    
-    #removing flag file
-    rm(flflags)
-    
-    flPARandsensor$fl_flags <- flPARandsensor$flags.y  # save for later debug
-    
+    flags_fl = rep(0, nrow(PARandsensor))
+    for (x in seq(1,nrow(flflags)))
+    {
+      print(x)
+      flags_fl[PARandsensor$sensor == x & day_data] = unlist(flflags[x])[-1]
+    }
+    PARandsensor$flags_fl = flags_fl
+    PARandsensor$flags_fl[is.na(PARandsensor$flags_fl)] <- 0
+
     #Getting flag counts
-    flflagcounts <- data.frame(good = sum(flPARandsensor$flags.y == 1),
-                               fail = sum(flPARandsensor$flags.y == 4),
-                               suspect = sum(flPARandsensor$flags.y == 3),
-                               uneval = sum(flPARandsensor$flags.y == 2))
-    
-    #Removing unnecessary columns from data
-    flPARandsensor <- flPARandsensor[,-c(9,11,12,13,14,15,16)]
-    
-    #ensuring data is ordered chronologically
-    flPARandsensor <- flPARandsensor[order(flPARandsensor$time),]
+    flflagcounts <- data.frame(good = sum(PARandsensor$flags_fl == 1),
+                               fail = sum(PARandsensor$flags_fl == 4),
+                               suspect = sum(PARandsensor$flags_fl == 3),
+                               uneval = sum(PARandsensor$flags_fl == 0))
 
 #Neighbour test
 
   #Isolating daily means to make this test more simple
-  dailymeanPAR <- flPARandsensor
+  dailymeanPAR <- PARandsensor
   dailymeanPAR$time <- floor(dailymeanPAR$time)
   dailymeanPAR <- ddply(dailymeanPAR,.variables = 'sensor', testdailymeans)
   dailymeanPAR <- daysoftheyear(dailymeanPAR)
   dailymeanPAR$depth <- unlist(lapply(dailymeanPAR$sensor, depthfromsensor))
-  dailymeanPAR$sensorname <- sapply(dailymeanPAR$sensor, sensorname)
   
   #neighbour test for pulse moorings
-  neighbourtestPULSE <- subset(dailymeanPAR, dailymeanPAR$sensor %in% c(1,2,3,4,7,8,9,10,11,12,13,14,19,23,24,25,26,30,31,32))
+  pulse_mooring <-  grepl("Pulse*", instanceSplit)  ## better way of finding the pulse mooring sensors
+  n <- 1:31
+  neighbourtestPULSE <- subset(dailymeanPAR, dailymeanPAR$sensor %in% c(n[pulse_mooring]))
   neighbourtestPULSE <- neighbourtestPULSE[order(neighbourtestPULSE$day, neighbourtestPULSE$depth),]
   
-  #Comducting the neighbour test, output is in TRUE/FALSE from
+  #Conducting the neighbour test, output is in TRUE/FALSE from
   neighbourtestlogicPULSE <- creatingdaylists(neighbourtestPULSE)
-  
   
   #Converting logic of test into flags
   neighbourflagsPULSE <- gettingflagsfromlogic(neighbourtestlogicPULSE)
-  
-  
+
   #Add flags back to original dataset
   neighbourflagschronPULSE <- unlist(neighbourflagsPULSE)
   neighbourtestPULSE$flags <- neighbourflagschronPULSE
@@ -172,7 +116,7 @@ PARandsensor$dates <- as.Date(PARandsensor$time,origin = "1950-01-01")
   }
   
   #neighbour test for SOFS moorings
-  neighbourtestSOFS <- subset(dailymeanPAR,!(dailymeanPAR$sensor %in% c(1,2,3,4,7,8,9,10,11,12,13,14,19,23,24,25,26,30,31,32)))
+  neighbourtestSOFS <- subset(dailymeanPAR,(dailymeanPAR$sensor %in% c(n[!pulse_mooring])))
   neighbourtestSOFS <- neighbourtestSOFS[order(neighbourtestSOFS$day,neighbourtestSOFS$depth),]
   
   #Comducting the neighbour test, output is in TRUE/FALSE from
@@ -212,7 +156,7 @@ PARandsensor$dates <- as.Date(PARandsensor$time,origin = "1950-01-01")
   
   
   #recombining separate Pulse and SOFS data
-  neighbourtest <- rbind(neighbourtestPULSE,neighbourtestSOFS)
+  neighbourtest <- rbind(neighbourtestPULSE, neighbourtestSOFS)
   
   #ensuring data is ordered chronologically
   neighbourtest <- neighbourtest[order(neighbourtest$day),]
@@ -228,50 +172,55 @@ PARandsensor$dates <- as.Date(PARandsensor$time,origin = "1950-01-01")
                                     uneval = sum(neighbourformerge$flags == 2))
   
   #Using output from flat line test
-  neighbourPARandsensor <- flPARandsensor
+  neighbourPARandsensor <- PARandsensor
   neighbourPARandsensor$floortimes <- floor(neighbourPARandsensor$time)
   
   #Adding flags from mean data back into full dataset
-  neighbourPARandsensor <- merge(neighbourPARandsensor,neighbourformerge, by = c('floortimes',"sensor"), all.x = TRUE)
+  neighbourPARandsensor <- merge(neighbourPARandsensor, neighbourformerge, by = c('floortimes', 'sensor'), all.x = TRUE)
   
   neighbourPARandsensor$flags.y[is.na(neighbourPARandsensor$flags.y)] <- 2
   neighbourflagslong <- neighbourPARandsensor$flags.y
   
-  neighbourPARandsensor$nn_flags <- neighbourPARandsensor$flags.y  # save for later debug
+  neighbourPARandsensor$flags_nn <- neighbourPARandsensor$flags  # save for later debug
   
   neighbourPARandsensor$flags <- addflags(neighbourPARandsensor$flags.x, neighbourPARandsensor$flags.y)
   
   #adding dates for plotting
-  neighbourPARandsensor$dates <- as.Date(neighbourPARandsensor$time, origin="1950-01-01")
-  neighbourPARandsensor <- neighbourPARandsensor[order(neighbourPARandsensor$time),]
+  #neighbourPARandsensor$dates <- as.Date(neighbourPARandsensor$time, origin="1950-01-01")
+  #neighbourPARandsensor <- neighbourPARandsensor[order(neighbourPARandsensor$time),]
   
   
   #removing unnecessary files
   rm(neighbourtest, neighbourflagsPULSE, neighbourflagsSOFS, neighbourtestlogicPULSE, neighbourtestlogicSOFS, neighbourtestPULSE, neighbourtestSOFS)
   
-  #reflag all SOFS 1 surface data as 3
-  neighbourPARandsensor$flags[neighbourPARandsensor$sensor==5] <- 3
-  neighbourPARandsensor$flags[neighbourPARandsensor$sensor==2] <- 3
-  neighbourPARandsensor$flags[neighbourPARandsensor$sensor==22] <- 3
-  neighbourPARandsensor <- neighbourPARandsensor[,-c(8,9,10,11)]
+# manual flagging data as 3
+  test_params <- paste(test_params, "manual: SOFS-1-2010-Licor-Q40966, Pulse-6-2009-Alec-200341, SOFS-4-2013-Licor-Q47470", sep="\n");
+  
+  PARandsensor$flags_man <- rep(0, nrow(PARandsensor))
+  mooring_sofs1_surface <- n[grepl("SOFS-1-2010.*Q40966", instanceSplit)]
+  PARandsensor$flags_man[PARandsensor$sensor==mooring_sofs1_surface] <- 3
+  mooring_pulse6_surface <- n[grepl("Pulse-6-2009.*200341", instanceSplit)]
+  PARandsensor$flags_man[PARandsensor$sensor==mooring_pulse6_surface] <- 3
+  mooring_sofs4_surface <- n[grepl("SOFS-4-2013.*Q47470", instanceSplit)]
+  PARandsensor$flags_man[PARandsensor$sensor==mooring_sofs4_surface] <- 3
+  
+  #PARandsensor <- PARandsensor[,-c(8,9,10,11)]
 
 #final step, reintroducing 5 flags and creating time/flag file for output
 
-badqcflags <- data.frame(time = badqcPARandsensor$time,flags = badqcPARandsensor$par_qc)
-goodqcflags <- data.frame(time = neighbourPARandsensor$time,flags = neighbourPARandsensor$flags)
+badqcflags <- data.frame(time=badqcPARandsensor$time, flags=badqcPARandsensor$par_qc)
+goodqcflags <- data.frame(time=neighbourPARandsensor$time, flags=neighbourPARandsensor$flags)
 finalflags <- rbind(goodqcflags, badqcflags)
-finalflags2 <- finalflags[order(finalflags$time),]
+#finalflags2 <- finalflags[order(finalflags$time),]
 
 
-  #Pete wants format time, mooring, PAR, value, flag
-  
-  mooringvec <-  unlist(lapply(allthePARdata$sensor, mooringfromsensor))
-  PARvec <- rep("PAR", nrow(allthePARdata))
-  PARvalues <- allthePARdata$par
-  
   #netcdf
-  nc <- create.nc("foo.nc")
+  nc <- create.nc("par-data-qc.nc")
+  att.put.nc(nc, "NC_GLOBAL", "source_file", "NC_CHAR", source_nc_file)
+  att.put.nc(nc, "NC_GLOBAL", "test_params", "NC_CHAR", test_params)
+
   dim.def.nc(nc, "TIME", unlim=TRUE)
+  
   var.def.nc(nc, "TIME", "NC_DOUBLE", "TIME")
   var.def.nc(nc, "PAR", "NC_FLOAT", "TIME")
   var.def.nc(nc, "PAR_quality_code", "NC_BYTE", "TIME")
@@ -279,26 +228,37 @@ finalflags2 <- finalflags[order(finalflags$time),]
   var.def.nc(nc, "PAR_quality_code_fl", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_cl", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_nn", "NC_BYTE", "TIME")
+  var.def.nc(nc, "PAR_quality_code_man", "NC_BYTE", "TIME")
   var.def.nc(nc, "sensor", "NC_BYTE", "TIME")
-  var.def.nc(nc, "PAR_solar_climate_high", "NC_FLOAT", "TIME")
-  var.def.nc(nc, "PAR_solar_climate_low", "NC_FLOAT", "TIME")
+  var.def.nc(nc, "ePAR", "NC_FLOAT", "TIME")
+  var.def.nc(nc, "depth", "NC_FLOAT", "TIME")
   
   att.put.nc(nc, "TIME", "units", "NC_CHAR", "days since 1950-01-01T00:00:00 UTC")
   
-  var.put.nc(nc, "TIME", finalflags2$time)
-  var.put.nc(nc, "PAR", PARvalues)
-  var.put.nc(nc, "PAR_quality_code", finalflags2$flags)
-  var.put.nc(nc, "PAR_quality_code_gr", grPARandsensor$gr_flags)
-  var.put.nc(nc, "PAR_quality_code_fl", flPARandsensor$fl_flags)
-  var.put.nc(nc, "PAR_quality_code_cl", clPARandsensor$cl_flags)
-  var.put.nc(nc, "PAR_quality_code_nn", neighbourPARandsensor$nn_flags)
-  var.put.nc(nc, "sensor", allthePARdata$sensor)
-  var.put.nc(nc, "PAR_solar_climate_high", grPARandsensor$ePARhigherchl)
-  var.put.nc(nc, "PAR_solar_climate_low", grPARandsensor$ePARlowerchl)
+  var.put.nc(nc, "TIME", PARandsensor$time)
+  var.put.nc(nc, "PAR", PARandsensor$par)
   
+  var.put.nc(nc, "PAR_quality_code", PARandsensor$flags)
+  var.put.nc(nc, "PAR_quality_code_gr", PARandsensor$flags_gr)
+  var.put.nc(nc, "PAR_quality_code_cl", PARandsensor$flags_cl)
+  var.put.nc(nc, "PAR_quality_code_fl", PARandsensor$flags_fl)
+  var.put.nc(nc, "PAR_quality_code_man", PARandsensor$flags_man)
+  var.put.nc(nc, "PAR_quality_code_nn", neighbourPARandsensor$flags_nn)
+  
+  var.put.nc(nc, "sensor", PARandsensor$sensor-1)  # sensors here are 1 numbered, and 0 numbered in the netCDF
+  
+  var.put.nc(nc, "ePAR", PARandsensor$ePAR)
+  var.put.nc(nc, "depth", PARandsensor$depth)
   close.nc(nc)
-  
+    
   #csv
+  
+  #Pete wants format time, mooring, PAR, value, flag
+  
+  mooringvec <-  unlist(lapply(allthePARdata$sensor, mooringfromsensor))
+  PARvec <- rep("PAR", nrow(allthePARdata))
+  PARvalues <- allthePARdata$par
+  
   #finaldataforpete <- cbind(finalflags2$time, mooringvec, PARvec, PARvalues, finalflags2$flags)      
   #colnames(finaldataforpete) <- c("TIME","MOORING","OBSCODE","VALUE","QC FLAG")
   

@@ -25,34 +25,37 @@ grossrangetest <- function(data, sensormin, sensormax, opmin, opmax)
 climatologyPARfromKd <- function(cldata, kd)
 {
   if (is.na(cldata["depth"]))
-    return(4)
+    return(as.numeric(NaN))
   if (is.na(cldata["solrad"]))
-    return(4)
+    return(as.numeric(NaN))
   
   if (cldata["depth"] <= 0)
   {
-    ePAR <- cldata["solrad"]
+    ePAR <- as.numeric(cldata["solrad"])
   }
   else
   {
     cldata["solrad"] <- as.numeric(cldata["solrad"])
-    ePAR <- as.numeric(cldata["solrad"]) * exp(-kd * as.numeric(cldata["depth"]))
+    ePAR <- as.numeric(as.numeric(cldata["solrad"]) * exp(-kd * as.numeric(cldata["depth"])))
   }
+  
   return(ePAR)
 }
 
 
 
-applyclimatologytest <- function(data)
+applyclimatologytest <- function(data, limit, mult)
 {
   if (is.na(data["par"]))
     return(4)
+  if (is.na(data["ePAR"]))
+    return(4)
   
-  #check if PAR value is above 3
-  if (as.numeric(data["par"]) > 3)
+  #check if PAR value is above the limit
+  if (as.numeric(data["ePAR"]) > limit)  ### this probably should be ePAR
   {
     #check if PAR value fails test
-    if (as.numeric(data["par"]) > (as.numeric(data["ePAR"]) * 3))
+    if (as.numeric(data["par"]) > (as.numeric(data["ePAR"]) * mult))
     {
       return(3)
     }
@@ -64,6 +67,24 @@ applyclimatologytest <- function(data)
   else
   {
     return(2)
+  }
+}
+
+applyclimatologytest2 <- function(data, limit, mult)
+{
+  if (is.na(data["par"]))
+    return(4)
+  if (is.na(data["ePAR"]))
+    return(4)
+  
+  #check if PAR value fails test
+  if (as.numeric(data["par"]) > ((as.numeric(data["ePAR"]) * mult) + limit))
+  {
+    return(3)
+  }
+  else
+  {
+    return(1)
   }
 }
 

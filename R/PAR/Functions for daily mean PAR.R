@@ -58,6 +58,7 @@ testdailymeans <- function(data)
   means <- means[-1,]
   rownames(means) <- seq(1,length(means[,1]))
   means$dates <- as.Date(means$day, origin = "1950-01-01")
+  
   return(means)
 }
 

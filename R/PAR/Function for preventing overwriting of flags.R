@@ -1,17 +1,17 @@
 #Adds flags to data without lower flags overwriting higher flags
-addflags <- function(data,flags)
+addflags <- function(flag, new_flag)
 {
-  for (x in seq(1,length(data)))
+  for (x in seq(1,length(flag)))
   {
-    if (!is.na(flags[x]))
+    if (!is.na(new_flag[x]))
     {
-      if (data[x] < flags[x])
+      if (flag[x] < new_flag[x])
       {
-        data[x] <- flags[x]
+        flag[x] <- new_flag[x]
       }
     }
   }
-  return(data)
+  return(flag)
 }
 
 
