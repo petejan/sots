@@ -1,8 +1,12 @@
 
+printf <- function(...) cat(sprintf(...))
+
 #Gross range test
 
-  #Applying gross range test
   test_params <- "gross_range: sensor_min=-1.7, sensor_max=10000, output_min=-1.7, output_max=4500"
+  printf(test_params)
+  
+  #Applying gross range test
   PARandsensor$flags_gr <- sapply(PARandsensor$par,
                                   grossrangetest,
                                   sensormin = -1.7,
@@ -17,7 +21,11 @@
                              uneval = sum(PARandsensor$flags_gr == 2))
   
 #Climatology test
-  test_params <- paste(test_params, "climatology: offset=3, mult=3, kd=0.04", sep="\n");
+  
+  params <- "climatology: offset=3, mult=3, kd=0.04"
+  printf(params)
+  
+  test_params <- paste(test_params, params, sep="\n");
   
   # adding estimated PAR to data 
   PARandsensor$ePAR <- apply(PARandsensor, 1, climatologyPARfromKd, kd=0.04)
@@ -40,7 +48,10 @@
   
     
 #Flat line test
-    test_params <- paste(test_params, "flat line: day_data_only, window=5, tolerance=0", sep="\n");
+    params <- "flat line: day_data_only, window=5, tolerance=0"
+    printf(params)
+    
+    test_params <- paste(test_params, params, sep="\n");
   
     #Isolating day time data
     day_data <- PARandsensor$solrad > 3
@@ -67,6 +78,10 @@
                                uneval = sum(PARandsensor$flags_fl == 0))
 
 #Neighbour test
+    
+  params <- "neighbour test: daily mean"
+  printf(params)
+  test_params <- paste(test_params, params, sep="\n");
 
   #Isolating daily means to make this test more simple
   dailymeanPAR <- PARandsensor
@@ -194,7 +209,11 @@
   rm(neighbourtest, neighbourflagsPULSE, neighbourflagsSOFS, neighbourtestlogicPULSE, neighbourtestlogicSOFS, neighbourtestPULSE, neighbourtestSOFS)
   
 # manual flagging data as 3
-  test_params <- paste(test_params, "manual: SOFS-1-2010-Licor-Q40966, Pulse-6-2009-Alec-200341, SOFS-4-2013-Licor-Q47470", sep="\n");
+  
+  params <- "manual: SOFS-1-2010-Licor-Q40966, Pulse-6-2009-Alec-200341, SOFS-4-2013-Licor-Q47470"
+  printf(params)
+  
+  test_params <- paste(test_params, params, sep="\n");
   
   PARandsensor$flags_man <- rep(0, nrow(PARandsensor))
   mooring_sofs1_surface <- n[grepl("SOFS-1-2010.*Q40966", instanceSplit)]
@@ -207,14 +226,19 @@
   #PARandsensor <- PARandsensor[,-c(8,9,10,11)]
 
 #final step, reintroducing 5 flags and creating time/flag file for output
+  
+  printf("recombine flags...")
 
-badqcflags <- data.frame(time=badqcPARandsensor$time, flags=badqcPARandsensor$par_qc)
-goodqcflags <- data.frame(time=neighbourPARandsensor$time, flags=neighbourPARandsensor$flags)
-finalflags <- rbind(goodqcflags, badqcflags)
-#finalflags2 <- finalflags[order(finalflags$time),]
+  badqcflags <- data.frame(time=badqcPARandsensor$time, flags=badqcPARandsensor$par_qc)
+  goodqcflags <- data.frame(time=neighbourPARandsensor$time, flags=neighbourPARandsensor$flags)
+  finalflags <- rbind(goodqcflags, badqcflags)
+  #finalflags2 <- finalflags[order(finalflags$time),]
 
 
-  #netcdf
+#netcdf
+  
+  printf("output netcdf file...")  
+  
   nc <- create.nc("par-data-qc.nc")
   att.put.nc(nc, "NC_GLOBAL", "source_file", "NC_CHAR", source_nc_file)
   att.put.nc(nc, "NC_GLOBAL", "test_params", "NC_CHAR", test_params)
@@ -223,15 +247,17 @@ finalflags <- rbind(goodqcflags, badqcflags)
   
   var.def.nc(nc, "TIME", "NC_DOUBLE", "TIME")
   var.def.nc(nc, "PAR", "NC_FLOAT", "TIME")
+  var.def.nc(nc, "ePAR", "NC_FLOAT", "TIME")
+
+  var.def.nc(nc, "sensor", "NC_BYTE", "TIME")
+  var.def.nc(nc, "depth", "NC_FLOAT", "TIME")
+  
   var.def.nc(nc, "PAR_quality_code", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_gr", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_fl", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_cl", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_nn", "NC_BYTE", "TIME")
   var.def.nc(nc, "PAR_quality_code_man", "NC_BYTE", "TIME")
-  var.def.nc(nc, "sensor", "NC_BYTE", "TIME")
-  var.def.nc(nc, "ePAR", "NC_FLOAT", "TIME")
-  var.def.nc(nc, "depth", "NC_FLOAT", "TIME")
   
   att.put.nc(nc, "TIME", "units", "NC_CHAR", "days since 1950-01-01T00:00:00 UTC")
   
@@ -253,15 +279,15 @@ finalflags <- rbind(goodqcflags, badqcflags)
     
   #csv
   
+  #printf("output csv file...")
+  
   #Pete wants format time, mooring, PAR, value, flag
   
-  mooringvec <-  unlist(lapply(allthePARdata$sensor, mooringfromsensor))
-  PARvec <- rep("PAR", nrow(allthePARdata))
-  PARvalues <- allthePARdata$par
+  #mooringvec <-  unlist(lapply(allthePARdata$sensor, mooringfromsensor))
+  #PARvec <- rep("PAR", nrow(allthePARdata))
+  #PARvalues <- allthePARdata$par
   
   #finaldataforpete <- cbind(finalflags2$time, mooringvec, PARvec, PARvalues, finalflags2$flags)      
   #colnames(finaldataforpete) <- c("TIME","MOORING","OBSCODE","VALUE","QC FLAG")
   
   #write.csv(finaldataforpete,file = "qcPARdata.csv", row.names = FALSE)
-
-  

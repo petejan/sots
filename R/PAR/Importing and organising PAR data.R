@@ -12,7 +12,7 @@ library(tidyr)
 library(oce)
 library(gtable)
 library(grid)
-library(LakeMetabolizer)
+#library(LakeMetabolizer)
 
 #Importing data from netcdf file
   source_nc_file <- "IMOS_ABOS-SOTS_F_20090928_SOFS_FV01_SOFS-1-2010-PAR-SWR-cSR-DiscreteGeometries_END-20160413_C-20200215.nc"
@@ -23,7 +23,11 @@ library(LakeMetabolizer)
 #  allSW <- read.nc(open.nc("IMOS_ABOS-SOTS_F_20100318_SOFS_FV01_SOFS-1-2010-SW-DiscreteGeometries_END-20171101_C-20180604.nc"))
   
 #Isolating the useful information from the netcdf
-  PARandsensor <- data.frame(time = allPAR$TIME, sensor = allPAR$stationIndex, par = allPAR$PAR,par_qc = allPAR$PAR_quality_code,solrad = allPAR$cSR)
+  PARandsensor <- data.frame(time = allPAR$TIME, 
+                             sensor = allPAR$stationIndex, 
+                             par = allPAR$PAR, 
+                             par_qc = allPAR$PAR_quality_code,
+                             solrad = allPAR$cSR)
   
 #Index numbers and stations names are offset by 1
   PARandsensor$sensor <- PARandsensor$sensor + 1
