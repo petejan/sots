@@ -196,7 +196,7 @@ printf <- function(...) cat(sprintf(...))
   neighbourPARandsensor$flags.y[is.na(neighbourPARandsensor$flags.y)] <- 2
   neighbourflagslong <- neighbourPARandsensor$flags.y
   
-  neighbourPARandsensor$flags_nn <- neighbourPARandsensor$flags  # save for later debug
+  PARandsensor$flags_nn <- neighbourPARandsensor$flags.y  # save for later debug
   
   neighbourPARandsensor$flags <- addflags(neighbourPARandsensor$flags.x, neighbourPARandsensor$flags.y)
   
@@ -237,7 +237,7 @@ printf <- function(...) cat(sprintf(...))
 
 #netcdf
   
-  printf("output netcdf file...")  
+  printf("output netcdf file...\n")  
   
   nc <- create.nc("par-data-qc.nc")
   att.put.nc(nc, "NC_GLOBAL", "source_file", "NC_CHAR", source_nc_file)
@@ -269,7 +269,7 @@ printf <- function(...) cat(sprintf(...))
   var.put.nc(nc, "PAR_quality_code_cl", PARandsensor$flags_cl)
   var.put.nc(nc, "PAR_quality_code_fl", PARandsensor$flags_fl)
   var.put.nc(nc, "PAR_quality_code_man", PARandsensor$flags_man)
-  var.put.nc(nc, "PAR_quality_code_nn", neighbourPARandsensor$flags_nn)
+  var.put.nc(nc, "PAR_quality_code_nn", PARandsensor$flags_nn)
   
   var.put.nc(nc, "sensor", PARandsensor$sensor-1)  # sensors here are 1 numbered, and 0 numbered in the netCDF
   
