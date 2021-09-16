@@ -9,16 +9,15 @@
 % load the mat file
 clear;
 close all;
-clc;
+%clc;
 
 % find the files
-search_path = '/Users/cs118/data/sensor_QC';
+%search_path = '/Users/cs118/data/sensor_QC';
 
-cd(search_path);
+%cd(search_path);
 load mooring_data.mat
 
 names_dat  = fieldnames(cleandat_level1);
-names_calibs = fieldnames(allcalibs);
 
 % set colors for the plots
 cols = get(gca,'Colororder');      
@@ -29,21 +28,14 @@ cols = get(gca,'Colororder');
 % loop through the deployments
 for n = 1:length(names_dat)
      
-    % find the correct calib factors
-    for i = 1:length(names_calibs)
-        comp1 = strcmp(names_dat(n),names_calibs(i));
-        if comp1 == 1
     
-            % calibrate fluo:
-            chl_fluo_fact = (cleandat_level1.(names_dat{n}).fl_cnts - allcalibs.(names_calibs{i}).fl_dark_cnts)...
-                .* allcalibs.(names_calibs{i}).fl_scale_factor;         % ug L-1
+    % calibrate fluo:
+    chl_fluo_fact = (cleandat_level1.(names_dat{n}).fl_cnts - cleandat_level1.(names_dat{n}).fl_dark_cnts)...
+        .* cleandat_level1.(names_dat{n}).fl_scale_factor;         % ug L-1
 
-            % calibrate bb:
-            bb_NTU_fact = (cleandat_level1.(names_dat{n}).bb_cnts - allcalibs.(names_calibs{i}).bb_dark_cnts)...
-                .* allcalibs.(names_calibs{i}).bb_scale_factor;         % NTU
-    
-        end            
-    end
+    % calibrate bb:
+    bb_NTU_fact = (cleandat_level1.(names_dat{n}).bb_cnts - cleandat_level1.(names_dat{n}).bb_dark_cnts)...
+        .* cleandat_level1.(names_dat{n}).bb_scale_factor;         % NTU
     
     % adjust the bb calibration to get to the volume scattering function
     % (VSF); conversion factor at 700 nm (as per Dave Stahlke email):
@@ -216,7 +208,7 @@ for n = 1:length(names_dat)
 %     orient tall
 %     print(names_dat{n},'-dpng') 
 %     
-    pause
+    %pause
     clear beta700 betasw bbp beta_p sal temp qc_comb ratio_ind
  
 end
@@ -226,4 +218,4 @@ end
 % hold off
 
 % save the calibrated data and new flags
-% save mooring_data.mat cleandat_level1 -append
+save mooring_data.mat cleandat_level1 -append

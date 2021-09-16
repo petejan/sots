@@ -6,12 +6,12 @@
 % load the mat file
 clear;
 close all;
-clc;
+
 
 % find the file
-search_path = '/Users/cs118/data/sensor_QC';
+%search_path = '/Users/cs118/data/sensor_QC';
 
-cd(search_path);
+%cd(search_path);
 load mooring_data.mat
 
 % set colors for the plots
@@ -256,7 +256,7 @@ for n = 1:length(names)
        ylabel('fluo counts')
        datetick('x',3)          % 12
        
-       pause
+       %pause
      
 end
 
@@ -264,8 +264,8 @@ end
 % rename the data structure to "cleandat_level1", to indicate the first cleaning
 % level that has been achieved
 
-% cleandat_level1 = alldat;
-% save mooring_data.mat cleandat_level1 -append
+cleandat_level1 = alldat;
+save mooring_data.mat cleandat_level1 -append
 
 % % save images
 % cd('/Users/cs118/figures/sensor_QC')
