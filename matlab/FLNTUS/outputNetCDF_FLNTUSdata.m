@@ -87,7 +87,7 @@ for i=1:nel
        
     ncwrite(outname, 'BB', cleandat_level1.(fields{i}).bb_bbp);
     ncwriteatt(outname, 'BB', 'long_name', 'optical backscatter');
-    ncwriteatt(outname, 'BB', 'units', 'mm-1');
+    ncwriteatt(outname, 'BB', 'units', 'm-1');
     ncwriteatt(outname, 'BB', 'valid_min', single(0));
     ncwriteatt(outname, 'BB', 'valid_max', single(1));
 
